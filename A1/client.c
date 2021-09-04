@@ -6,6 +6,8 @@
 #define PORT 8080
 #define QUERYMSG "query"
 
+void find_top_proc(char *message, char *data);
+
 int main(int argc , char *argv[])
 {
     int sock;
@@ -41,9 +43,20 @@ int main(int argc , char *argv[])
     }
 
     puts("process info received\n");
+
+
+    // creating new file for each client
+    int pid = getpid();
+    char *mypid = malloc(6);
+    sprintf(mypid, "%d", pid);
+    puts(mypid);
+    char filename[30] = "client_files/cfile";
+    strcat(filename, mypid);
+    strcat(filename, ".txt");
+
     // storing process info on local file
     FILE *fp;
-    fp = fopen("client_file.txt", "w");
+    fp = fopen(filename, "w");
     if( fp==NULL )  {
         perror("File failed to open\n");
         return;
@@ -54,9 +67,14 @@ int main(int argc , char *argv[])
     }
     fclose(fp);
 
-    strcpy(message, "top proc");
+    // finding top process
+    find_top_proc(message, server_reply);
     send(sock , message , strlen(message) , 0);
 
     close(sock);
     return 0;
+}
+
+void find_top_proc(char *message, char *data)   {
+    strcpy(message, "top proc");
 }
