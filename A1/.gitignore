@@ -1,5 +1,6 @@
 server
 client
+server_file.txt
 .vscode/
 client_files/*
 !client_files/.gitkeep

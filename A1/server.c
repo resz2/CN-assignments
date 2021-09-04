@@ -4,6 +4,10 @@
 #include<sys/socket.h>
 #include<arpa/inet.h>
 #include<unistd.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<fcntl.h>
+#include<dirent.h>
 
 #include<pthread.h>
 
@@ -12,10 +16,11 @@
 #define QUERYMSG "query"
 
 typedef struct proc_info    {
-    int pid;
-    long long cpu_time;
+    char pname[30];
+    int cpu_time;
 };
 
+int is_pid(struct dirent *entry);
 int sorter(const void *p, const void *q);
 void *connection_handler(void *);
 void find_process_info(char *data);
@@ -118,8 +123,6 @@ void *connection_handler(void *socket_desc)
 }
 
 void find_process_info(char *data)  {
-    strcpy(data, "procinfo");
-
     top_n_procs(data);
 
     FILE *fp;
@@ -136,11 +139,111 @@ void find_process_info(char *data)  {
 }
 
 void top_n_procs(char *data)   {
+    DIR *proc_dir;
+    struct dirent *entry;
+    int fd;
+
+    proc_dir = opendir("/proc");
+    if(proc_dir == NULL)    {
+        perror("could not open directory");
+        return;
+    }
+
+    // finding number of current processes
+    int count = 0;
+    while(entry = readdir(proc_dir))    {
+        if(!is_pid(entry))  {
+            continue;
+        }
+        count++;
+    }
+    struct proc_info proc_array[count + 100];
+
+    int i = 0;
+    proc_dir = opendir("/proc");
+
+    while((entry = readdir(proc_dir)))  {
+        if(!is_pid(entry))  {
+            continue;
+        }
+        char path[300] = "/proc/";
+        strcat(path, entry->d_name);
+        strcat(path, "/stat");
+
+        fd = open(path, O_RDONLY);
+
+        if(fd == -1)    {
+            perror("cant open file\n");
+            return;
+        }
+
+        // count 13 whitespaces
+        int whites = 0, l1 = 0, l2 = 0, l3 = 0;
+        char buffer[200], name[30], num1[15], num2[15];
+        read(fd, buffer, sizeof(buffer));
+
+        int j;
+        for(j=0; j < sizeof(buffer); j++)   {
+            if(buffer[j] == ' ')    {
+                whites++;
+                continue;
+            }
+            if(whites == 1) {
+                name[l1++] = buffer[j];
+            }
+            if(whites == 13)    {
+                num1[l2++] = buffer[j];
+            }
+            if(whites == 14)    {
+                num2[l3++] = buffer[j];
+            }
+        }
+        name[l1] = '\0';
+        num1[l2] = '\0';
+        num2[l3] = '\0';
+
+        int runtime = atoi(num1) + atoi(num2);
+        strcpy(proc_array[i].pname, name);
+        proc_array[i].cpu_time = runtime;
+    }
+
+    qsort((void*)proc_array, count+100, sizeof(proc_array[0]), sorter);
+
+    for(int i=0; i<N; i++)  {
+        char num[15];
+        sprintf(num, "%d", proc_array[i].cpu_time);
+        if(i==0)    {
+            strcpy(data, proc_array[i].pname);
+            strcat(data, " : ");
+            strcat(data, num);
+            strcat(data, "\n");
+        }
+        else    {
+            strcat(data, proc_array[i].pname);
+            strcat(data, " : ");
+            strcat(data, num);
+            strcat(data, "\n");
+        }
+    }
+}
+
+int is_pid(struct dirent *entry)    {
+    char *name = entry -> d_name;
+    for(int i=0; i<strlen(name) ; i++)  {
+        if(!isdigit(name[i])) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 int sorter(const void *p, const void *q)    {
-    long long time1 = ((struct proc_info *)p)->cpu_time;
-    long long time2 = ((struct proc_info *)q)->cpu_time;
+    if(!p && !q)    return 0;
+    if(!p)          return 1;
+    if(!q)          return -1;
+
+    int time1 = ((struct proc_info *)p)->cpu_time;
+    int time2 = ((struct proc_info *)q)->cpu_time;
 
     return time2 - time1;
 }

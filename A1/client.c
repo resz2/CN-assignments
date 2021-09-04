@@ -68,7 +68,7 @@ int main(int argc , char *argv[])
     fclose(fp);
 
     // finding top process
-    find_top_proc(message, server_reply);
+    find_top_proc(message, filename);
     send(sock , message , strlen(message) , 0);
 
     sleep(10);
@@ -76,6 +76,8 @@ int main(int argc , char *argv[])
     return 0;
 }
 
-void find_top_proc(char *message, char *data)   {
-    strcpy(message, "top proc");
+void find_top_proc(char *message, char *path)   {
+    FILE *fd;
+    fd = fopen(path, "r");
+    fscanf(fd, "%[^\n]", message);
 }
