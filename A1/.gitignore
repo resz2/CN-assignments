@@ -2,3 +2,4 @@ server
 client
 .vscode/
 client_files/*
+!client_files/.gitkeep
