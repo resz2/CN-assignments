@@ -71,6 +71,7 @@ int main(int argc , char *argv[])
     find_top_proc(message, server_reply);
     send(sock , message , strlen(message) , 0);
 
+    sleep(10);
     close(sock);
     return 0;
 }

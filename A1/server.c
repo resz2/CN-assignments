@@ -11,9 +11,15 @@
 #define PORT 8080
 #define QUERYMSG "query"
 
+typedef struct proc_info    {
+    int pid;
+    long long cpu_time;
+};
+
+int sorter(const void *p, const void *q);
 void *connection_handler(void *);
 void find_process_info(char *data);
-
+void top_n_procs(char *data);
 
 int main(int argc , char *argv[])
 {
@@ -59,9 +65,9 @@ int main(int argc , char *argv[])
             return 1;
         }
 
-        //Now join the thread , so that we dont terminate before the thread
         puts("Handler assigned");
-        pthread_join( sniffer_thread , NULL);
+        // removed join for concurrent functioning
+        //pthread_join( sniffer_thread , NULL);
     }
 
     if (new_socket<0)   {
@@ -114,6 +120,8 @@ void *connection_handler(void *socket_desc)
 void find_process_info(char *data)  {
     strcpy(data, "procinfo");
 
+    top_n_procs(data);
+
     FILE *fp;
     fp = fopen("server_file.txt", "w");
     if( fp==NULL )  {
@@ -125,4 +133,14 @@ void find_process_info(char *data)  {
         fputs("\n", fp);
     }
     fclose(fp);
+}
+
+void top_n_procs(char *data)   {
+}
+
+int sorter(const void *p, const void *q)    {
+    long long time1 = ((struct proc_info *)p)->cpu_time;
+    long long time2 = ((struct proc_info *)q)->cpu_time;
+
+    return time2 - time1;
 }
