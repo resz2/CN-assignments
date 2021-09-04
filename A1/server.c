@@ -8,7 +8,9 @@
 #include<sys/stat.h>
 #include<fcntl.h>
 #include<dirent.h>
-
+#include<ctype.h>
+#include<unistd.h>
+#include<stdlib.h>
 #include<pthread.h>
 
 #define N 5
@@ -26,8 +28,7 @@ void *connection_handler(void *);
 void find_process_info(char *data);
 void top_n_procs(char *data);
 
-int main(int argc , char *argv[])
-{
+int main(int argc , char *argv[])   {
     int socket_desc , new_socket , c , *new_sock;
     struct sockaddr_in server , client;
     char *message;
@@ -39,26 +40,24 @@ int main(int argc , char *argv[])
         return 1;
     }
 
-    //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(PORT);
 
-    //Bind
+    // binding
     if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)  {
         perror("bind failed");
         return 1;
     }
     puts("bind done");
 
-    //Listen
-    listen(socket_desc , 3);
+    // listening for clients
+    listen(socket_desc , 10);
 
-    //Accept and incoming connection
+    // accept incoming connection
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
-    while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
-    {
+    while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) ) {
         puts("Connection accepted");
 
         pthread_t sniffer_thread;
@@ -76,18 +75,15 @@ int main(int argc , char *argv[])
     }
 
     if (new_socket<0)   {
-        perror("accept failed");
+        perror("could not accept");
         return 1;
     }
 
     return 0;
 }
 
-// This will handle connection for each client
 
-void *connection_handler(void *socket_desc)
-{
-    //Get the socket descriptor
+void *connection_handler(void *socket_desc) {
     int sock = *(int*)socket_desc;
     int read_size;
     char buffer[2000] , client_message[2000];
@@ -106,7 +102,6 @@ void *connection_handler(void *socket_desc)
         }
         // Print the top process
         printf("%s\n", client_message);
-        //write(sock , client_message , strlen(client_message));
         memset(client_message, 0, strlen(client_message));
     }
 

@@ -8,17 +8,16 @@
 
 void find_top_proc(char *message, char *data);
 
-int main(int argc , char *argv[])
-{
+int main(int argc , char *argv[])   {
     int sock;
     struct sockaddr_in server;
     char message[1000] , server_reply[2000];
 
     //Create socket
     sock = socket(AF_INET , SOCK_STREAM , 0);
-    if (sock == -1)
-    {
-        printf("Could not create socket");
+    if (sock == -1) {
+        perror("Could not create socket");
+        return 1;
     }
     puts("Socket created");
 
@@ -27,8 +26,7 @@ int main(int argc , char *argv[])
     server.sin_port = htons(PORT);
 
     //Connect to remote server
-    if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0)
-    {
+    if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0)    {
         perror("connect failed. Error");
         return 1;
     }
