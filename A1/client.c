@@ -33,43 +33,44 @@ int main(int argc , char *argv[])   {
 
     puts("Connected\n");
 
-    send(sock , QUERYMSG , strlen(QUERYMSG) , 0);
+    while(1) {
+        send(sock , QUERYMSG , strlen(QUERYMSG) , 0);
 
-    if( recv(sock , server_reply , 2000 , 0) < 0)   {
-        perror("recv failed");
-        return 1;
+        if( recv(sock , server_reply , 2000 , 0) < 0)   {
+            perror("recv failed");
+            return 1;
+        }
+
+        puts("top process info received\n");
+
+
+        // // creating new file for each client
+        // int pid = getpid();
+        // char *mypid = malloc(6);
+        // sprintf(mypid, "%d", pid);
+        // puts(mypid);
+        // char filename[30] = "client_files/cfile";
+        // strcat(filename, mypid);
+        // strcat(filename, ".txt");
+
+        // // storing process info on local file
+        // FILE *fp;
+        // fp = fopen(filename, "w");
+        // if( fp==NULL )  {
+        //     perror("File failed to open\n");
+        //     return;
+        // }
+        // if(strlen(server_reply)>0)  {
+        //     fputs(server_reply, fp);
+        //     fputs("\n", fp);
+        // }
+        // fclose(fp);
+
+        // // finding top process
+        // find_top_proc(message, filename);
+        // send(sock , message , strlen(message) , 0);
+        usleep(10000);
     }
-
-    puts("process info received\n");
-
-
-    // creating new file for each client
-    int pid = getpid();
-    char *mypid = malloc(6);
-    sprintf(mypid, "%d", pid);
-    puts(mypid);
-    char filename[30] = "client_files/cfile";
-    strcat(filename, mypid);
-    strcat(filename, ".txt");
-
-    // storing process info on local file
-    FILE *fp;
-    fp = fopen(filename, "w");
-    if( fp==NULL )  {
-        perror("File failed to open\n");
-        return;
-    }
-    if(strlen(server_reply)>0)  {
-        fputs(server_reply, fp);
-        fputs("\n", fp);
-    }
-    fclose(fp);
-
-    // finding top process
-    find_top_proc(message, filename);
-    send(sock , message , strlen(message) , 0);
-
-    sleep(10);
     close(sock);
     return 0;
 }

@@ -18,7 +18,7 @@
 #define QUERYMSG "query"
 
 typedef struct proc_info    {
-    char pname[30];
+    int pid;
     int cpu_time;
 };
 
@@ -161,6 +161,9 @@ void top_n_procs(char *data)   {
         if(!is_pid(entry))  {
             continue;
         }
+        char *pidstr = entry->d_name;
+        proc_array[i].pid = atoi(pidstr);
+
         char path[300] = "/proc/";
         strcat(path, entry->d_name);
         strcat(path, "/stat");
@@ -174,7 +177,7 @@ void top_n_procs(char *data)   {
 
         // count 13 whitespaces
         int whites = 0, l1 = 0, l2 = 0, l3 = 0;
-        char buffer[200], name[30], num1[15], num2[15];
+        char buffer[500], name[300], num1[15], num2[15];
         read(fd, buffer, sizeof(buffer));
 
         int j;
@@ -198,23 +201,25 @@ void top_n_procs(char *data)   {
         num2[l3] = '\0';
 
         int runtime = atoi(num1) + atoi(num2);
-        strcpy(proc_array[i].pname, name);
+        int pid = name;
+        proc_array[i].pid = pid;
         proc_array[i].cpu_time = runtime;
     }
 
     qsort((void*)proc_array, count+100, sizeof(proc_array[0]), sorter);
 
     for(int i=0; i<N; i++)  {
-        char num[15];
+        char num[15], pid[10];
         sprintf(num, "%d", proc_array[i].cpu_time);
+        sprintf(pid, "%d", proc_array[i].pid);
         if(i==0)    {
-            strcpy(data, proc_array[i].pname);
+            strcpy(data, pid);
             strcat(data, " : ");
             strcat(data, num);
             strcat(data, "\n");
         }
         else    {
-            strcat(data, proc_array[i].pname);
+            strcat(data, pid);
             strcat(data, " : ");
             strcat(data, num);
             strcat(data, "\n");
